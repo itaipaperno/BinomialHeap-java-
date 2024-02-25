@@ -1,10 +1,10 @@
 import java.nio.channels.NonReadableChannelException;
 
 /**
- * BinomialHeap
+ * BinomialHeap 
  *
  * An implementation of binomial heap over non-negative integers.
- * Based on exercise from previous semester.
+ * Based on exercise from previous semester .
  */
 public class BinomialHeap
 {
