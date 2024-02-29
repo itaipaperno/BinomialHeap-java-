@@ -12,8 +12,12 @@ public class BinomialHeap
 	public HeapNode last;
 	public HeapNode min;
 
-	/*
-	 * : x.size == y.size
+	/**
+	 * 
+	 * @pre x.size == y.size
+	 * 
+	 * links 2 binary heaps with the roots x,y 
+	 * 
 	 */
 	protected static HeapNode link(HeapNode x, HeapNode y){
 		if (x.item.key > y.item.key){
@@ -32,6 +36,29 @@ public class BinomialHeap
 		x.rank++;
 		return x;
 	}
+	
+	/**
+	 * 
+	 * sifts up node until it is at the right location in the tree
+	 * 
+	 */
+	protected static void siftup(HeapNode x){
+		HeapNode curr = x;
+		if (curr == null)  // x is null
+			return;
+		/*
+		 * iterate up the tree until we're at the right spot or at the root,
+		 * each iteration switch the items of curr and curr.parent
+		 */
+		while ((curr.parent != null) && (curr.item.key < curr.parent.item.key)) { 
+			HeapItem tmp = curr.parent.item; 
+			curr.parent.item = curr.item; 
+			curr.item = tmp;
+			curr = curr.parent;
+		
+		}
+	}
+	
 	/**
 	 * 
 	 * pre: key > 0
@@ -62,7 +89,7 @@ public class BinomialHeap
 	 */
 	public HeapItem findMin()
 	{
-		return null; // should be replaced by student code
+		return this.min.item;
 	} 
 
 	/**
@@ -74,7 +101,9 @@ public class BinomialHeap
 	 */
 	public void decreaseKey(HeapItem item, int diff) 
 	{    
-		return; // should be replaced by student code
+		item.key -= diff;
+		HeapNode node = item.node; 
+		siftup(node);
 	}
 
 	/**
@@ -104,7 +133,7 @@ public class BinomialHeap
 	 */
 	public int size()
 	{
-		return 42; // should be replaced by student code
+		return this.size; 
 	}
 
 	/**
@@ -115,7 +144,12 @@ public class BinomialHeap
 	 */
 	public boolean empty()
 	{
-		return false; // should be replaced by student code
+		if (this.size() == 0) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 	/**
@@ -125,8 +159,24 @@ public class BinomialHeap
 	 */
 	public int numTrees()
 	{
-		return 0; // should be replaced by student code
+		if (this.empty()) // if heap is empty it has 0 trees
+			return 0;
+	
+		int cnt = 0;
+		HeapNode curr = this.last;
+		
+		/*
+		 * iterate over roots of all trees and count, until the end of the cycle
+		 */
+		do {  
+			curr = curr.next;
+			cnt++;
+		}
+		while (curr != this.last);
+		
+		return cnt;
 	}
+	
 
 	/**
 	 * Class implementing a node in a Binomial Heap.
@@ -166,4 +216,103 @@ public class BinomialHeap
 		}
 	}
 
+	
+	/*
+	 * 
+	 * 
+	 * printing heap
+	 * 
+	 * 
+	 */
+	public void printHeap() {
+		if (empty()) {
+			System.out.println("Heap is empty");
+			return;
+		}
+		System.out.println("Binomial Heap:");
+		HeapNode currentRoot = last;
+		HeapNode stopNode = last.next; // Stop condition for circular list of roots
+		boolean stop = false;
+
+		do {
+			System.out.println("Root: " + currentRoot.item.key);
+			printTree(currentRoot, 0, currentRoot); // Print the tree rooted at current root
+			currentRoot = currentRoot.next;
+			if (currentRoot == stopNode) {
+				stop = true; // We've visited all roots
+			}
+		} while (!stop);
+	}
+
+	public void printTree(HeapNode node, int depth, HeapNode initialRoot) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < depth; i++) {
+			sb.append("  "); // Adjust spacing for depth
+		}
+		sb.append(node.item.key).append(" [").append(node.rank).append("]");
+
+		System.out.print(sb.toString());
+
+		if (node.next != node.parent && node.next != null && node.next != initialRoot) {
+			printTree(node.next, depth, initialRoot); // Print sibling recursively until we reach the initial root
+		}
+		
+		
+		
+		if (node.child != null) {
+			System.out.println();
+			printTree(node.child, depth + 1, node.child); // Print child recursively
+		}
+
+		
+	}
+	
+	
+	
+	public void printTree3(HeapNode root) {
+	    if (root == null) {
+	        return;
+	    }
+
+	    int level = 0;
+	    int spacesNeeded = (int) Math.pow(2, size(root) + 1) - 1; // Calculate spaces needed for balanced display
+
+	    printTreeHelper(root, level, spacesNeeded);
+	}
+	
+	private static void printTreeHelper(HeapNode node, int level, int spacesNeeded) {
+	    if (node == null) {
+	        return;
+	    }
+
+	    // Print spaces for indentation
+	    // ... (same as before)
+
+	    // Print node information
+	    System.out.print(node.item.key + " (" + node.rank + ")" + (node.parent == null ? "" : " (parent: " + node.parent.item.key + ")"));
+
+	    System.out.println();
+
+	    // Loop through siblings and recursively print them with adjusted level
+	    HeapNode current = node.child;
+	    while (current != node) { // Loop until reaching the starting node again
+	        printTreeHelper(current, level + 1, spacesNeeded / 2);
+	        current = current.next;
+	    }
+	}
+
+	private static int size(HeapNode root) {
+	    if (root == null) {
+	        return 0;
+	    }
+
+	    int count = 1; // Count the root node
+	    HeapNode current = root.child;
+	    while (current != root) { // Loop until reaching the starting node again
+	        count++;
+	        current = current.next;
+	    }
+
+	    return count;
+	}
 }
