@@ -1,9 +1,8 @@
-import java.nio.channels.NonReadableChannelException;
-
-public class Test {
+ public class Test {
 	BinomialHeap B = new BinomialHeap();
 	
 	public static void main(String[] args) {
+		System.out.println("hello");
 		testLink();
 	}
 	

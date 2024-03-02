@@ -1,3 +1,5 @@
+
+
 import java.nio.channels.NonReadableChannelException;
 
 /**
@@ -78,8 +80,19 @@ public class BinomialHeap
 	 */
 	public void deleteMin()
 	{
-		return; // should be replaced by student code
-
+		/*
+		 * add edge cases
+		 */
+		HeapNode min_node = this.findMin().node; // find minimal node
+		BinomialHeap heap2 = new BinomialHeap(); // new empty bin heap
+		heap2.last = min_node.child;
+		int n = min_node.rank; // size of subtree of min_node
+		heap2.size = (int) (Math.pow(2, n)-1); // size = (2^n) - 1
+		 
+		// delete pointers from min_node
+		min_node.child.parent = null;
+		min_node.next = null;
+		this.meld(heap2); // meld with new heap
 	}
 
 	/**
@@ -113,7 +126,9 @@ public class BinomialHeap
 	 */
 	public void delete(HeapItem item) 
 	{    
-		return; // should be replaced by student code
+		int neg_inf = Integer.MIN_VALUE;
+		this.decreaseKey(item, neg_inf); // make key of item negative infinity, so it moves to the top of the tree.
+		this.deleteMin(); // delete it
 	}
 
 	/**
