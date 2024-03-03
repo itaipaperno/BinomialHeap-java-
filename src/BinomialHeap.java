@@ -48,15 +48,22 @@ public class BinomialHeap
 		HeapNode curr = x;
 		if (curr == null)  // x is null
 			return;
-		/*
-		 * iterate up the tree until we're at the right spot or at the root,
-		 * each iteration switch the items of curr and curr.parent
-		 */
-		while ((curr.parent != null) && (curr.item.key < curr.parent.item.key)) { 
-			HeapItem tmp = curr.parent.item; 
-			curr.parent.item = curr.item; 
-			curr.item = tmp;
-			curr = curr.parent;
+		
+		// iterate up the tree until we're at the right spot or at the root, each iteration, switch the items of the node and its parent.
+		while ((curr.parent != null) && (curr.item.key < curr.parent.item.key)) {
+			// temporary values
+			HeapNode curr_node = curr;
+			HeapItem curr_item = curr.item;
+			HeapNode parent_node = curr.parent;
+			HeapItem parent_item = curr.parent.item;
+
+			parent_node.item = curr_item; 
+			parent_node.item.node = parent_node;
+			
+			curr_node.item = parent_item;
+			curr_node.item.node = curr_node;
+			
+			curr = curr.parent; // advance curr
 		
 		}
 	}
@@ -80,19 +87,40 @@ public class BinomialHeap
 	 */
 	public void deleteMin()
 	{
-		/*
-		 * add edge cases
-		 */
+		if (this.empty()) 
+			return;
+	
 		HeapNode min_node = this.findMin().node; // find minimal node
 		BinomialHeap heap2 = new BinomialHeap(); // new empty bin heap
 		heap2.last = min_node.child;
-		int n = min_node.rank; // size of subtree of min_node
-		heap2.size = (int) (Math.pow(2, n)-1); // size = (2^n) - 1
-		 
-		// delete pointers from min_node
-		min_node.child.parent = null;
+		
+		
+		
+		HeapNode curr = min_node.child;
+		// iterate over roots of new heap and delete parent pointers
+		do {
+			if (curr != null) {
+				curr.parent = null;
+				curr = curr.next;
+			}
+		}
+		while ((curr != min_node.child) && (curr != null));
+		
+		// delete pointer from min_node
 		min_node.next = null;
-		this.meld(heap2); // meld with new heap
+		
+		// meld with new heap
+		this.meld(heap2); 
+		
+		// size of main heap
+		this.size -= 1; 
+		
+		// size of new heap
+		int n = min_node.rank; 
+		heap2.size = (int) (Math.pow(2, n)-1); // size = (2^n) - 1
+		
+		// update this.min
+		// update this.last(if min_node was last)
 	}
 
 	/**
@@ -113,7 +141,10 @@ public class BinomialHeap
 	 * 
 	 */
 	public void decreaseKey(HeapItem item, int diff) 
-	{    
+	{   
+		if (item == null) 
+			return;
+		
 		item.key -= diff;
 		HeapNode node = item.node; 
 		siftup(node);
@@ -125,7 +156,10 @@ public class BinomialHeap
 	 *
 	 */
 	public void delete(HeapItem item) 
-	{    
+	{
+		if (item == null) 
+			return;
+		
 		int neg_inf = Integer.MIN_VALUE;
 		this.decreaseKey(item, neg_inf); // make key of item negative infinity, so it moves to the top of the tree.
 		this.deleteMin(); // delete it
@@ -180,9 +214,7 @@ public class BinomialHeap
 		int cnt = 0;
 		HeapNode curr = this.last;
 		
-		/*
-		 * iterate over roots of all trees and count, until the end of the cycle
-		 */
+		// iterate over roots of all trees and count, until the end of the cycle
 		do {  
 			curr = curr.next;
 			cnt++;
