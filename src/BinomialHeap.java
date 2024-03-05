@@ -68,6 +68,112 @@ public class BinomialHeap
 		}
 	}
 	
+	
+	/**
+	 * 
+	 * merges two heaps into one without linking same ranks
+	 * 
+	 */
+	private void merge(BinomialHeap heap2) {
+		this.size += heap2.size;
+		
+		// if one one the heaps is empty
+		if (heap2.empty()) {
+			return;
+		}
+		if (this.empty()) {
+			this.last = heap2.last;
+			this.min = heap2.min;
+			this.size = heap2.size;
+			return;
+		}	
+		
+		// update minimum
+		if (this.min.item.key > heap2.min.item.key)
+			this.min = heap2.min;
+		
+		HeapNode p1 = this.last.next;
+		HeapNode p2 = heap2.last.next;
+		this.last.next = null;
+		heap2.last.next = null;
+		HeapNode newhead = null;
+		HeapNode connector = null;
+		
+		// merge root lists in order of increasing rank
+		do {
+			if (p1.rank <= p2.rank) {
+				if (newhead == null) {
+					newhead = connector = p1;
+				}
+				else {
+					connector.next = p1;
+					connector = p1;
+				}
+				p1 = p1.next;
+			}
+			else {
+				if (newhead == null){
+					newhead = connector = p2;
+				}
+				else {
+					connector.next = p2;
+					connector = p2;
+				}
+				p2 = p2.next;
+			}
+		}
+		while((p1 != null) && (p2 != null));
+		
+		// add the remaining nodes to the root list
+		if (p1 == null) {
+			connector.next = p2;
+			this.last = heap2.last;
+			this.last.next = newhead;
+		}
+		else {
+			connector.next = p1;
+			this.last.next = newhead;
+		}
+	}
+	
+	/**
+	 * 
+	 * links same trees with same rank in heap
+	 * 
+	 */
+	private void union() {
+		HeapNode curr = this.last.next;
+		HeapNode prev = null;
+		this.last.next = null;
+		HeapNode next = curr.next;
+		HeapNode newhead = curr;
+		
+		while (next != null) {
+			// 3 trees with same rank or no match at all
+			if ((curr.rank != next.rank) || ((next.next != null) && (next.next.rank == curr.rank))) {
+				prev = curr;
+				curr = next;
+			}
+			else {
+				HeapNode tmpnext = next.next;
+				HeapNode linkedroot = link(curr, next);
+				linkedroot.next = tmpnext;
+				curr = linkedroot;
+				next = tmpnext;
+
+				if (prev != null) 
+					prev.next = linkedroot;
+				else 
+					newhead = linkedroot;
+				
+			}
+		}
+		curr.next = newhead;
+		this.last = curr;
+		
+		this.min = this.findMin().node;
+	}
+	
 	/**
 	 * 
 	 * pre: key > 0
@@ -76,8 +182,19 @@ public class BinomialHeap
 	 *
 	 */
 	public HeapItem insert(int key, String info) 
-	{    
-		return new HeapItem(0); // should be replaced by student code
+	{   
+		// create new item, node, heap
+		HeapItem new_item = new HeapItem(key, info);
+		HeapNode new_node = new HeapNode(new_item);
+		BinomialHeap new_heap = new BinomialHeap();
+		new_heap.last = new_node;
+		new_heap.min = new_node;
+		new_heap.size = 1;
+		
+		// meld new heap with this
+		this.meld(new_heap);
+		
+		return new_item; 
 	}
 
 	/**
@@ -90,37 +207,67 @@ public class BinomialHeap
 		if (this.empty()) 
 			return;
 	
-		HeapNode min_node = this.findMin().node; // find minimal node
+		HeapNode min_node = this.min; // find minimal node
 		BinomialHeap heap2 = new BinomialHeap(); // new empty bin heap
-		heap2.last = min_node.child;
 		
-		
-		
-		HeapNode curr = min_node.child;
-		// iterate over roots of new heap and delete parent pointers
-		do {
-			if (curr != null) {
+		if (min_node.child != null) {
+			heap2.last = min_node.child;
+			HeapNode curr = min_node.child;
+			heap2.min = curr;
+			
+			// iterate over roots of new heap and delete parent pointers and find new heap2 min
+			do {
 				curr.parent = null;
 				curr = curr.next;
-			}
+					
+				if (curr.item.key < heap2.min.item.key)
+					heap2.min = curr;	
+			   }
+			while ((curr != min_node.child) && (curr != null));
+			
+			// size of new heap
+			int n = min_node.rank; 
+			heap2.size = (int) (Math.pow(2, n)-1); // size = (2^n) - 1
+			
 		}
-		while ((curr != min_node.child) && (curr != null));
+		else {
+			
+		}
 		
 		// delete pointer from min_node
-		min_node.next = null;
+		min_node.child = null;
+		
+		
+		// size of main heap
+		this.size -= heap2.size + 1; 
+		
+		curr = min_node.next;
+		this.min = curr;
+		
+		// find new min of this and min_node.prev
+		while (curr.next != min_node) {
+			if (curr.item.key < this.min.item.key) {
+				this.min = curr;
+			}
+			curr = curr.next;
+		}
+		
+		
+		if (curr == min_node) { // this was a heap with only one tree
+			this.last = null;
+			this.min = null;
+		}
+		else { // this was a heap with multiple trees
+			if(this.last == min_node) { // min_node was last
+				this.last = curr;
+			}
+			curr.next = min_node.next;
+		}
+		
+		min_node.next = null; 
 		
 		// meld with new heap
 		this.meld(heap2); 
-		
-		// size of main heap
-		this.size -= 1; 
-		
-		// size of new heap
-		int n = min_node.rank; 
-		heap2.size = (int) (Math.pow(2, n)-1); // size = (2^n) - 1
-		
-		// update this.min
-		// update this.last(if min_node was last)
 	}
 
 	/**
@@ -130,6 +277,15 @@ public class BinomialHeap
 	 */
 	public HeapItem findMin()
 	{
+		HeapNode curr = this.last;
+		this.min = curr;
+		
+		while (curr.next != this.last) {
+			if (curr.item.key < this.min.item.key) {
+				this.min = curr;
+				curr = curr.next;
+			}
+		}
 		return this.min.item;
 	} 
 
@@ -148,6 +304,7 @@ public class BinomialHeap
 		item.key -= diff;
 		HeapNode node = item.node; 
 		siftup(node);
+		this.min = this.findMin().node; // update new min
 	}
 
 	/**
@@ -172,6 +329,8 @@ public class BinomialHeap
 	 */
 	public void meld(BinomialHeap heap2)
 	{
+		this.merge(heap2);
+		this.union();
 		return; // should be replaced by student code   		
 	}
 
@@ -243,6 +402,7 @@ public class BinomialHeap
 			this.item = item;
 			item.node = this;
 			this.rank = 0;
+			this.next = this;
 		}
 	}
 
@@ -258,108 +418,11 @@ public class BinomialHeap
 		public HeapItem() {
 		}
 		
-		public HeapItem(int key) {
+		public HeapItem(int key, String info) {
 			this.key = key;
+			this.info = info;
 		}
-	}
-
-	
-	/*
-	 * 
-	 * 
-	 * printing heap
-	 * 
-	 * 
-	 */
-	public void printHeap() {
-		if (empty()) {
-			System.out.println("Heap is empty");
-			return;
-		}
-		System.out.println("Binomial Heap:");
-		HeapNode currentRoot = last;
-		HeapNode stopNode = last.next; // Stop condition for circular list of roots
-		boolean stop = false;
-
-		do {
-			System.out.println("Root: " + currentRoot.item.key);
-			printTree(currentRoot, 0, currentRoot); // Print the tree rooted at current root
-			currentRoot = currentRoot.next;
-			if (currentRoot == stopNode) {
-				stop = true; // We've visited all roots
-			}
-		} while (!stop);
-	}
-
-	public void printTree(HeapNode node, int depth, HeapNode initialRoot) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < depth; i++) {
-			sb.append("  "); // Adjust spacing for depth
-		}
-		sb.append(node.item.key).append(" [").append(node.rank).append("]");
-
-		System.out.print(sb.toString());
-
-		if (node.next != node.parent && node.next != null && node.next != initialRoot) {
-			printTree(node.next, depth, initialRoot); // Print sibling recursively until we reach the initial root
-		}
-		
-		
-		
-		if (node.child != null) {
-			System.out.println();
-			printTree(node.child, depth + 1, node.child); // Print child recursively
-		}
-
-		
-	}
-	
-	
-	
-	public void printTree3(HeapNode root) {
-	    if (root == null) {
-	        return;
-	    }
-
-	    int level = 0;
-	    int spacesNeeded = (int) Math.pow(2, size(root) + 1) - 1; // Calculate spaces needed for balanced display
-
-	    printTreeHelper(root, level, spacesNeeded);
-	}
-	
-	private static void printTreeHelper(HeapNode node, int level, int spacesNeeded) {
-	    if (node == null) {
-	        return;
-	    }
-
-	    // Print spaces for indentation
-	    // ... (same as before)
-
-	    // Print node information
-	    System.out.print(node.item.key + " (" + node.rank + ")" + (node.parent == null ? "" : " (parent: " + node.parent.item.key + ")"));
-
-	    System.out.println();
-
-	    // Loop through siblings and recursively print them with adjusted level
-	    HeapNode current = node.child;
-	    while (current != node) { // Loop until reaching the starting node again
-	        printTreeHelper(current, level + 1, spacesNeeded / 2);
-	        current = current.next;
-	    }
-	}
-
-	private static int size(HeapNode root) {
-	    if (root == null) {
-	        return 0;
-	    }
-
-	    int count = 1; // Count the root node
-	    HeapNode current = root.child;
-	    while (current != root) { // Loop until reaching the starting node again
-	        count++;
-	        current = current.next;
-	    }
-
-	    return count;
 	}
 }
+
+	
