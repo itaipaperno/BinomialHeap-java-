@@ -210,6 +210,9 @@ public class BinomialHeap
 		HeapNode min_node = this.min; // find minimal node
 		BinomialHeap heap2 = new BinomialHeap(); // new empty bin heap
 		
+		/*
+		 * min_node has children
+		 */
 		if (min_node.child != null) {
 			heap2.last = min_node.child;
 			HeapNode curr = min_node.child;
@@ -228,44 +231,46 @@ public class BinomialHeap
 			// size of new heap
 			int n = min_node.rank; 
 			heap2.size = (int) (Math.pow(2, n)-1); // size = (2^n) - 1
-			
-		}
-		else {
-			
 		}
 		
-		// delete pointer from min_node
-		min_node.child = null;
+		/*
+		 * min_node isnt lone tree
+		 */
+		if (min_node.next != min_node){
+			// size of main heap
+			this.size -= (heap2.size + 1); 
+			
+			// find new min of this and min_node.prev
+			HeapNode curr = min_node.next;
+			this.min = curr;
 		
-		
-		// size of main heap
-		this.size -= heap2.size + 1; 
-		
-		curr = min_node.next;
-		this.min = curr;
-		
-		// find new min of this and min_node.prev
-		while (curr.next != min_node) {
-			if (curr.item.key < this.min.item.key) {
-				this.min = curr;
+			while (curr.next != min_node) {
+				if (curr.item.key < this.min.item.key) {
+					this.min = curr;
+				}
+				curr = curr.next;
 			}
-			curr = curr.next;
-		}
-		
-		
-		if (curr == min_node) { // this was a heap with only one tree
-			this.last = null;
-			this.min = null;
-		}
-		else { // this was a heap with multiple trees
-			if(this.last == min_node) { // min_node was last
+			
+			// min_node was last
+			if(this.last == min_node) { 
 				this.last = curr;
 			}
 			curr.next = min_node.next;
 		}
 		
-		min_node.next = null; 
+		/*
+		 * min_node is lone tree
+		 */
+		else { 
+			this.last = null;
+			this.min = null;
+			this.size = 0;
+		}
 		
+		// delete pointer from min_node
+		min_node.child = null;
+		min_node.next = null;
+				
 		// meld with new heap
 		this.meld(heap2); 
 	}
