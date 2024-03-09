@@ -1,5 +1,3 @@
-
-
 import java.nio.channels.NonReadableChannelException;
 
 /**
@@ -75,8 +73,7 @@ public class BinomialHeap
 	 * 
 	 */
 	private void merge(BinomialHeap heap2) {
-		this.size += heap2.size;
-		
+				
 		// if one one the heaps is empty
 		if (heap2.empty()) {
 			return;
@@ -134,6 +131,7 @@ public class BinomialHeap
 			connector.next = p1;
 			this.last.next = newhead;
 		}
+		this.size += heap2.size;
 	}
 	
 	/**
@@ -142,6 +140,9 @@ public class BinomialHeap
 	 * 
 	 */
 	private void union() {
+		if (this.empty()){
+			return;
+		}
 		HeapNode curr = this.last.next;
 		HeapNode prev = null;
 		this.last.next = null;
@@ -153,6 +154,8 @@ public class BinomialHeap
 			if ((curr.rank != next.rank) || ((next.next != null) && (next.next.rank == curr.rank))) {
 				prev = curr;
 				curr = next;
+				next = next.next;
+				
 			}
 			else {
 				HeapNode tmpnext = next.next;
@@ -170,8 +173,6 @@ public class BinomialHeap
 		}
 		curr.next = newhead;
 		this.last = curr;
-		
-		this.min = this.findMin().node;
 	}
 	
 	/**
@@ -250,6 +251,9 @@ public class BinomialHeap
 				}
 				curr = curr.next;
 			}
+			if (curr.item.key < this.min.item.key) {
+				this.min = curr;
+			}
 			
 			// min_node was last
 			if(this.last == min_node) { 
@@ -272,6 +276,8 @@ public class BinomialHeap
 		min_node.next = null;
 				
 		// meld with new heap
+		System.out.println("this min: " + this.min.item.key);
+		System.out.println("heap2 min: " + heap2.min.item.key);
 		this.meld(heap2); 
 	}
 
@@ -282,16 +288,13 @@ public class BinomialHeap
 	 */
 	public HeapItem findMin()
 	{
-		HeapNode curr = this.last;
-		this.min = curr;
-		
-		while (curr.next != this.last) {
-			if (curr.item.key < this.min.item.key) {
-				this.min = curr;
-				curr = curr.next;
-			}
+		if (this.empty()){
+			return null;
 		}
-		return this.min.item;
+		else{
+			return this.min.item;
+		}
+		
 	} 
 
 	/**
@@ -309,7 +312,11 @@ public class BinomialHeap
 		item.key -= diff;
 		HeapNode node = item.node; 
 		siftup(node);
-		this.min = this.findMin().node; // update new min
+
+		// update new min
+		if (item.key < this.min.item.key){
+			this.min = item.node;
+		}
 	}
 
 	/**
@@ -336,7 +343,7 @@ public class BinomialHeap
 	{
 		this.merge(heap2);
 		this.union();
-		return; // should be replaced by student code   		
+		return;    		
 	}
 
 	/**
